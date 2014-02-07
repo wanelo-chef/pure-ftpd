@@ -6,6 +6,8 @@ ftphome = node['pure_ftpd']['home']
 
 group ftpgroup
 
+directory '/var/data'
+
 user ftpuser do
   home '/var/data/ftp'
   gid ftpgroup
