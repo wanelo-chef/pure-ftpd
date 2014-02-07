@@ -56,6 +56,7 @@ cmd << '--pidfile /var/run/pure-ftpd/pure-ftpd.pid'
 cmd << '--noanonymous' if node['pure_ftpd']['disable_anonymous_users']
 cmd << '--login puredb:/opt/local/etc/pure-ftpd/pureftpd.pdb'
 cmd << '--nochmod' if node['pure_ftpd']['disable_chmod']
+cmd << '--bind 0.0.0.0,21'
 cmd << '--chrooteveryone'
 cmd << '--createhomedir'
 cmd << '--dontresolve'
