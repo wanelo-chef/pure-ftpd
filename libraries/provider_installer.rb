@@ -9,14 +9,10 @@ class Chef
       end
 
       def action_run
-        ruby_block 'install pure-ftpd' do
-          block do
-            download_tarfile
-            untar_source_tarball
-            configure
-            make
-          end
-        end
+        download_tarfile
+        untar_source_tarball
+        configure
+        make
       end
 
       def configure
