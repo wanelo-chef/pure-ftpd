@@ -1,4 +1,4 @@
-package 'pure-ftpd'
+include_recipe 'pure-ftpd::install'
 
 ftpuser = node['pure_ftpd']['system_user']
 ftpgroup = node['pure_ftpd']['system_group']
