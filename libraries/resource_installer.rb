@@ -28,7 +28,7 @@ class Chef
       end
 
       def source_directory
-        @dir ||= "#{Chef::Config[:file_cache_path]}/#{source_filename.gsub(/tar\.gz/, '')}"
+        @dir ||= "#{Chef::Config[:file_cache_path]}/#{source_filename.gsub(/\.tar\.gz/, '')}"
       end
 
       def cflags
