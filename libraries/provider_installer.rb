@@ -21,8 +21,6 @@ class Chef
         configure << "--sysconfdir=#{node['paths']['etc_dir']}"
         configure << '--localstatedir=/var'
         configure << '--with-ldap'
-        configure << '--with-mysql'
-        configure << '--with-pgsql'
         configure << '--with-tls'
         configure << "--with-certfile=#{node['paths']['etc_dir']}/openssl/private/pure-ftpd.pem"
         configure << '--with-rfc2640'
