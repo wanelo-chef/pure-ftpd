@@ -6,7 +6,14 @@ def load_current_resource
 end
 
 action :create_or_update do
-  create_virtual_user
+  if @current_resource
+    Chef::Log.warn('skipping already existing user')
+    new_resource.updated_by_last_action(false)
+  else
+    create_virtual_user
+    new_resource.updated_by_last_action(true)
+    new_resource.notifies :commit, user_database_resource, :delayed
+  end
 end
 
 action :delete do
@@ -16,7 +23,7 @@ action :delete do
     cmd << '-f/opt/local/etc/pure-ftpd/pureftpd.passwd'
     cmd << new_resource.username
 
-    shell_out! *cmd
+    shell_out!(*cmd)
 
     new_resource.updated_by_last_action(true)
     new_resource.notifies :commit, user_database_resource, :delayed
@@ -24,30 +31,14 @@ action :delete do
 end
 
 def create_virtual_user
-  if @current_resource
-    Chef::Log.warn('skipping user create, already exists')
-  else
-    Chef::Log.warn('creating user')
-    create_user_home_directory
+  Chef::Log.warn('creating user')
+  create_user_home_directory
 
-    cmd = ['pure-pw']
-    cmd << 'useradd'
-    cmd << new_resource.username
-    cmd << "-u #{find_uid(system_user)}"
-    cmd << "-g #{find_gid(system_group)}"
-    cmd << "-d#{new_resource.home_directory}"
-    cmd << "-y #{new_resource.max_concurrency}"
-    cmd << "-f/opt/local/etc/pure-ftpd/pureftpd.passwd"
-
-    user_add = shell_out!(
-        *cmd,
-        input: "#{new_resource.password}\n"*2,
-        user: system_user,
-        group: system_group)
-
-    new_resource.updated_by_last_action(true)
-    new_resource.notifies :commit, user_database_resource, :delayed
-  end
+  shell_out!(
+    *create_user_command,
+    input: "#{new_resource.password}\n" * 2,
+    user: system_user,
+    group: system_group)
 end
 
 def create_user_home_directory
@@ -59,26 +50,34 @@ def create_user_home_directory
 end
 
 def load_user(username)
-  user_data = shell_out(
-      'pure-pw',
-      'show',
-      username,
-      '-f/opt/local/etc/pure-ftpd/pureftpd.passwd',
-      user: system_user, group: system_group)
+  return unless user_data_for(username).exitstatus == 0
 
-  if user_data.exitstatus == 0
-    user_values = user_data.stdout.split("\n").
-        delete_if(&:empty?).
-        map { |r| r.split(/\s*:\s*/) }.
-        inject({}) { |hash, key_value_pair| hash[key_value_pair.first] = key_value_pair.last; hash }
-    user = Chef::Resource::PureFtpdVirtualUser.new(new_resource.username)
+  user_values = user_data_for(username).stdout.split("\n")
+    .delete_if(&:empty?)
+    .map { |r| r.split(/\s*:\s*/) }
+    .each_with_object({}) do |hash, key_value_pair|
+      hash[key_value_pair.first] = key_value_pair.last
+      hash
+    end
 
-    user.username(user_values['Login'])
-    user.uid(user_values['UID'].split(' ').first.to_i)
-    user.gid(user_values['GID'].split(' ').first.to_i)
+  user = Chef::Resource::PureFtpdVirtualUser.new(new_resource.username)
 
-    user
-  end
+  user.username(user_values['Login'])
+  user.uid(user_values['UID'].split(' ').first.to_i)
+  user.gid(user_values['GID'].split(' ').first.to_i)
+
+  user
+end
+
+def create_user_command
+  cmd = ['pure-pw']
+  cmd << 'useradd'
+  cmd << new_resource.username
+  cmd << "-u #{find_uid(system_user)}"
+  cmd << "-g #{find_gid(system_group)}"
+  cmd << "-d#{new_resource.home_directory}"
+  cmd << "-y #{new_resource.max_concurrency}"
+  cmd << '-f/opt/local/etc/pure-ftpd/pureftpd.passwd'
 end
 
 def find_uid(username)
@@ -95,6 +94,15 @@ end
 
 def system_group
   node['pure_ftpd']['system_group']
+end
+
+def user_data_for(username)
+  @user_data ||= shell_out(
+    'pure-pw',
+    'show',
+    username,
+    '-f/opt/local/etc/pure-ftpd/pureftpd.passwd',
+    user: system_user, group: system_group)
 end
 
 # Used to notify that the virtual user database should be committed at the

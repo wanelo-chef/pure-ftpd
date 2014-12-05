@@ -9,5 +9,5 @@ attribute :gid, kind_of: [Integer, NilClass], default: nil
 attribute :max_concurrency, kind_of: Integer, default: 5
 
 def home_directory
-  "#{node['pure_ftpd']['home']}/#{self.username}"
+  "#{node['pure_ftpd']['home']}/#{username}"
 end

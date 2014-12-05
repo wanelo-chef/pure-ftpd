@@ -1,3 +1,4 @@
+include_recipe 'smf'
 include_recipe 'pure-ftpd::install'
 
 ftpuser = node['pure_ftpd']['system_user']
@@ -9,7 +10,7 @@ group ftpgroup
 directory '/var/data'
 
 user ftpuser do
-  home '/var/data/ftp'
+  home ftphome
   gid ftpgroup
   shell '/bin/false'
   supports manage_home: true
@@ -33,22 +34,18 @@ directory '/var/run/pure-ftpd' do
   mode 0755
 end
 
-service 'pure-ftpd' do
-  supports enable: true, reload: true, restart: true, disable: true
-end
-
 execute 'touch the pure-ftpd passwd file' do
-  command 'touch /opt/local/etc/pure-ftpd/pureftpd.passwd'
+  command 'umask 0117; touch /opt/local/etc/pure-ftpd/pureftpd.passwd'
   user ftpuser
   group ftpgroup
-  not_if { File.exists?('/opt/local/etc/pure-ftpd/pureftpd.passwd') }
+  not_if { File.exist?('/opt/local/etc/pure-ftpd/pureftpd.passwd') }
 end
 
 execute 'initialize pure-ftpd virtual user database' do
   command 'pure-pw mkdb /opt/local/etc/pure-ftpd/pureftpd.pdb -f /opt/local/etc/pure-ftpd/pureftpd.passwd'
   user ftpuser
   group ftpgroup
-  not_if { File.exists?('/opt/local/etc/pure-ftpd/pureftpd.pdb') }
+  not_if { File.exist?('/opt/local/etc/pure-ftpd/pureftpd.pdb') }
 end
 
 cmd = ['pure-ftpd']
@@ -60,6 +57,7 @@ cmd << '--bind 0.0.0.0,21'
 cmd << '--chrooteveryone'
 cmd << '--createhomedir'
 cmd << '--dontresolve'
+cmd << '--uploadscript'
 cmd << '--brokenclientscompatibility'
 cmd << '--daemonize' # daemonize
 
@@ -71,4 +69,8 @@ smf 'pure-ftpd' do
   working_directory ftphome
   environment 'PATH' => '/opt/local/bin:/opt/local/sbin'
   notifies :restart, 'service[pure-ftpd]'
+end
+
+service 'pure-ftpd' do
+  supports enable: true, reload: true, restart: true, disable: true
 end

@@ -1,0 +1,22 @@
+---
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_zero
+  require_chef_omnibus: true
+
+platforms:
+- name: smartos-base64
+  driver_config:
+    box: livinginthepast/smartos-base64
+    vagrantfile_erb: test/templates/Vagrantfile.smartos.erb
+  provisioner:
+    name: chef_zero
+    sudo: true
+    chef_omnibus_url: https://raw.github.com/wanelo-chef/chef-bootstrap/master/latest.sh
+
+suites:
+  - name: default
+    run_list:
+      - recipe[pure-ftpd::default]

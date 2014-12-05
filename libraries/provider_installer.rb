@@ -3,47 +3,50 @@ require 'chef/mixin/shell_out'
 
 class Chef
   class Provider
+    #
+    # pure_ftpd_installer provider
+    #
     class PureFtpdInstaller < Chef::Provider
-
       def load_current_resource
       end
 
       def action_run
-        download_tarfile
-        untar_source_tarball
-        configure
-        make
+        if new_resource.installed?
+          new_resource.updated_by_last_action(false)
+        else
+          download_tarfile
+          untar_source_tarball
+          configure
+          make
+        end
       end
 
       def configure
-        configure = ['./configure']
-        configure << '--with-everything'
-        configure << "--sysconfdir=#{node['paths']['etc_dir']}"
-        configure << '--localstatedir=/var'
-        configure << '--with-ldap'
-        configure << '--with-tls'
-        configure << "--with-certfile=#{node['paths']['etc_dir']}/openssl/private/pure-ftpd.pem"
-        configure << '--with-rfc2640'
-        configure << "--with-libintl-prefix=#{node['paths']['prefix_dir']}"
-        configure << "--with-libiconv-prefix=#{node['paths']['prefix_dir']}"
-        configure << "--prefix=#{node['paths']['prefix_dir']}"
-        configure << "--mandir=#{node['paths']['prefix_dir']}/man"
-        configure << '--with-nonroot'
-
         execute 'configure pure-ftpd' do
-          command configure.join(' ')
+          command configure_command.join(' ')
           cwd new_resource.source_directory
           environment 'CFLAGS' => new_resource.cflags,
                       'LDFLAGS' => new_resource.ldflags
-          not_if { new_resource.installed? }
         end
+      end
+
+      def configure_command
+        %W(
+          ./configure --with-everything --sysconfdir=#{node['paths']['etc_dir']}
+          --localstatedir=/var --with-ldap --with-tls
+          --with-certfile=#{node['paths']['etc_dir']}/openssl/private/pure-ftpd.pem
+          --with-rfc2640 --with-libintl-prefix=#{node['paths']['prefix_dir']}
+          --with-libiconv-prefix=#{node['paths']['prefix_dir']}
+          --prefix=#{node['paths']['prefix_dir']} --mandir=#{node['paths']['prefix_dir']}/man
+          --with-nonroot
+          --with-uploadscript
+        )
       end
 
       def make
         execute 'make pure-ftpd' do
           command 'make && make install'
           cwd new_resource.source_directory
-          not_if { new_resource.installed? }
         end
       end
 
