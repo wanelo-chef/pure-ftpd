@@ -55,7 +55,7 @@ def load_user(username)
   user_values = user_data_for(username).stdout.split("\n")
     .delete_if(&:empty?)
     .map { |r| r.split(/\s*:\s*/) }
-    .each_with_object({}) do |hash, key_value_pair|
+    .inject({}) do |hash, key_value_pair|
       hash[key_value_pair.first] = key_value_pair.last
       hash
     end
