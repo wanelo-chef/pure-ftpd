@@ -14,6 +14,7 @@ class Chef
         if new_resource.installed?
           new_resource.updated_by_last_action(false)
         else
+          install_dependencies
           download_tarfile
           untar_source_tarball
           configure
@@ -41,6 +42,10 @@ class Chef
           --with-nonroot
           --with-uploadscript
         )
+      end
+
+      def install_dependencies
+        run_context.include_recipe('build-essential')
       end
 
       def make
