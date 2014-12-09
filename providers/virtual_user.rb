@@ -55,9 +55,8 @@ def load_user(username)
   user_values = user_data_for(username).stdout.split("\n")
     .delete_if(&:empty?)
     .map { |r| r.split(/\s*:\s*/) }
-    .inject({}) do |hash, key_value_pair|
+    .each_with_object({}) do |key_value_pair, hash|
       hash[key_value_pair.first] = key_value_pair.last
-      hash
     end
 
   user = Chef::Resource::PureFtpdVirtualUser.new(new_resource.username)

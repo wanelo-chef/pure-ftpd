@@ -59,7 +59,9 @@ class Chef
       def patch
         execute 'patch pure-ftpd' do
           command %{
-            sed -i 's/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW);/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW | O_NONBLOCK);/' upload-pipe.c
+            sed -i \
+            's/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW);/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW | O_NONBLOCK);/' \
+            upload-pipe.c
           }
           cwd ::File.join(new_resource.source_directory, 'src')
         end
