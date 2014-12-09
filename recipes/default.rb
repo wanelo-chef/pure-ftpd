@@ -59,7 +59,7 @@ cmd << '--createhomedir'
 cmd << '--dontresolve'
 cmd << '--uploadscript'
 cmd << '--brokenclientscompatibility'
-cmd << '--daemonize' # daemonize
+cmd << '--daemonize'
 
 smf 'pure-ftpd' do
   user ftpuser
