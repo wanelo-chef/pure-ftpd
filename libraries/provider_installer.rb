@@ -17,6 +17,7 @@ class Chef
           install_dependencies
           download_tarfile
           untar_source_tarball
+          patch
           configure
           make
         end
@@ -52,6 +53,15 @@ class Chef
         execute 'make pure-ftpd' do
           command 'make && make install'
           cwd new_resource.source_directory
+        end
+      end
+
+      def patch
+        execute 'patch pure-ftpd' do
+          command %{
+            sed -i 's/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW);/open(UPLOAD_PIPE_FILE, O_WRONLY | O_NOFOLLOW | O_NONBLOCK);/' upload-pipe.c
+          }
+          cwd ::File.join(new_resource.source_directory, 'src')
         end
       end
 

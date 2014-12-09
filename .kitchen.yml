@@ -20,3 +20,6 @@ suites:
   - name: default
     run_list:
       - recipe[pure-ftpd::default]
+  - name: virtual-user
+    run_list:
+      - recipe[test-setup::users]
