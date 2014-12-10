@@ -28,10 +28,29 @@ directory '/opt/local/etc/pure-ftpd' do
   mode 0700
 end
 
-directory '/var/run/pure-ftpd' do
-  owner ftpuser
-  group ftpgroup
+template '/opt/local/sbin/pure-ftpd-setup' do
+  source 'pure-ftpd-setup.erb'
   mode 0755
+end
+
+# /var/run is a tmpfs, so the pure-ftpd directory does
+# not persist after a reboot. Ensure that the required
+# run directories exist before the main service starts.
+smf 'pure-ftpd-setup' do
+  fmri '/application/setup/ftpd-setup'
+  start_command '/opt/local/sbin/pure-ftpd-setup'
+  stop_command 'true'
+  duration 'transient'
+  manifest_type 'setup'
+  dependencies [
+    { 'name' => 'multi-user', 'fmris' => ['svc:/milestone/multi-user'],
+      'grouping' => 'require_all', 'restart_on' => 'none', 'type' => 'service' }
+  ]
+  notifies :enable, 'service[ftpd-setup]'
+end
+
+service 'ftpd-setup' do
+  supports enable: true, disable: true, reload: true
 end
 
 execute 'touch the pure-ftpd passwd file' do
@@ -68,6 +87,10 @@ smf 'pure-ftpd' do
 
   working_directory ftphome
   environment 'PATH' => '/opt/local/bin:/opt/local/sbin'
+  dependencies [
+    { 'name' => 'pure-ftpd-setup', 'fmris' => ['svc:/application/setup/ftpd-setup'],
+      'grouping' => 'require_all', 'restart_on' => 'none', 'type' => 'service' }
+  ]
   notifies :restart, 'service[pure-ftpd]'
 end
 
