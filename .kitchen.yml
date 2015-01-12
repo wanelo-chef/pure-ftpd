@@ -10,6 +10,7 @@ platforms:
 - name: smartos-base64
   driver_config:
     box: livinginthepast/smartos-base64
+    box_url: https://atlas.hashicorp.com/livinginthepast/boxes/smartos-base64
     vagrantfile_erb: test/templates/Vagrantfile.smartos.erb
   provisioner:
     name: chef_zero
