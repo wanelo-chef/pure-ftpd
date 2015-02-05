@@ -29,3 +29,15 @@ pure_ftpd_virtual_user 'my user' do
   password 'my-password'
 end
 ```
+
+## Tests
+
+This cookbook depends on the
+[vagrant-smartos-zones](https://github.com/vagrant-smartos/vagrant-smartos-zones)
+vagrant plugin.
+
+```shell
+vagrant plugin install vagrant-smartos-zones
+bundle
+bundle exec strainer test
+```
